@@ -9,10 +9,16 @@ import (
 )
 
 const PROMPT = ">>"
+const GOMONKET = `
+  __  __     __ __  __  __  _ _  _______   __
+ / _]/__\ __|  V  |/__\|  \| | |/ / __\ 'v' /
+| [/\ \/ |__| \_/ | \/ | | ' |   <| _| '. .'
+\__/\__/   |_| |_|\__/|_|\__|_|\_\___| !_!
+`
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-
+	io.WriteString(out, GOMONKET)
 	for {
 		fmt.Fprintf(out, PROMPT)
 		scanned := scanner.Scan()
