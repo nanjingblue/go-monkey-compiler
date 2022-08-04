@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/nanjingblue/go-monkey/evaluator"
 	"github.com/nanjingblue/go-monkey/lexer"
+	"github.com/nanjingblue/go-monkey/object"
 	"github.com/nanjingblue/go-monkey/parser"
 	"io"
 )
@@ -19,6 +20,8 @@ const GOMONKET = `
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
+	env := object.NewEnvironment()
+
 	io.WriteString(out, GOMONKET)
 	for {
 		fmt.Fprintf(out, PROMPT)
@@ -36,7 +39,7 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		evaluated := evaluator.Eval(program)
+		evaluated := evaluator.Eval(program, env)
 		if evaluated != nil {
 			io.WriteString(out, evaluated.Inspect())
 			io.WriteString(out, "\n")
