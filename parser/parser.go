@@ -83,6 +83,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 	// 调用表达式
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
+	// 字符串
+	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	return p
 }
 
@@ -97,7 +99,7 @@ func (p *Parser) peekError(t token.TokenType) {
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	msg := fmt.Sprintf("no prefix parse function for '%s' found", t)
 	p.errors = append(p.errors, msg)
 }
 
@@ -404,4 +406,8 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 		return nil
 	}
 	return args
+}
+
+func (p *Parser) parseStringLiteral() ast.Expression {
+	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
 }

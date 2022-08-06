@@ -268,3 +268,13 @@ func (ce *CallExpression) String() string {
 
 	return out.String()
 }
+
+// StringLiteral 将 token.STRING 转换为字符串字面量的 AST 节点
+type StringLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (sl *StringLiteral) expressionNode()      {}
+func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
+func (sl *StringLiteral) String() string       { return sl.Token.Literal }

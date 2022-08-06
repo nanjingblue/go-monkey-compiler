@@ -49,6 +49,9 @@ const (
 	IF       = "IF"
 	ELSE     = "ELSE"
 	RETURN   = "RETURN"
+
+	// STRING 字符串类型
+	STRING = "STRING"
 )
 
 // keywords 关键字表
