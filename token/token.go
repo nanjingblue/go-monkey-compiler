@@ -52,6 +52,10 @@ const (
 
 	// STRING 字符串类型
 	STRING = "STRING"
+
+	// 数组
+	LBRACKET = "["
+	RBRACKET = "]"
 )
 
 // keywords 关键字表
