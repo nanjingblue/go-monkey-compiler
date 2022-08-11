@@ -56,6 +56,9 @@ const (
 	// 数组
 	LBRACKET = "["
 	RBRACKET = "]"
+
+	// 哈希表中的 ':'
+	COLON = ":"
 )
 
 // keywords 关键字表
