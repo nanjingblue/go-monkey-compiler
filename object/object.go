@@ -1,5 +1,5 @@
 /*
-	monkey 的对象系统，数据类型有3个：整数、布尔值、空值 它们都是 object
+monkey 的对象系统，数据类型有3个：整数、布尔值、空值 它们都是 object
 */
 package object
 
@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/nanjingblue/go-monkey/ast"
+	"hash/fnv"
 	"strings"
 )
 
@@ -23,6 +24,7 @@ const (
 	STRING_OBJ       = "STRING"
 	BUILTIN_OBJ      = "BUILTIN"
 	ARRAY_OBJ        = "ARRAY"
+	HASH_OBJ         = "HASH"
 )
 
 // Object 根对象
@@ -38,6 +40,9 @@ type Integer struct {
 
 func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
 func (i *Integer) Inspect() string  { return fmt.Sprintf("%d", i.Value) }
+func (i *Integer) HashKey() HashKey {
+	return HashKey{Type: i.Type(), Value: uint64(i.Value)}
+}
 
 // Boolean 布尔类型
 type Boolean struct {
@@ -46,6 +51,16 @@ type Boolean struct {
 
 func (b *Boolean) Type() ObjectType { return BOOLEAN_OBJ }
 func (b *Boolean) Inspect() string  { return fmt.Sprintf("%t", b.Value) }
+func (b *Boolean) HashKey() HashKey {
+	var value uint64
+
+	if b.Value {
+		value = 1
+	} else {
+		value = 0
+	}
+	return HashKey{Type: b.Type(), Value: value}
+}
 
 // Null 空值
 type Null struct{}
@@ -103,6 +118,11 @@ type String struct {
 
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) Inspect() string  { return s.Value }
+func (s *String) HashKey() HashKey {
+	h := fnv.New64a()
+	h.Write([]byte(s.Value))
+	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
 
 // Builtin 内置
 type Builtin struct {
@@ -128,4 +148,38 @@ func (ao *Array) Inspect() string {
 	out.WriteString(strings.Join(elements, ", "))
 	out.WriteString("]")
 	return out.String()
+}
+
+// HashKey 对象
+type HashKey struct {
+	Type  ObjectType
+	Value uint64
+}
+
+type HashPair struct {
+	Key   Object
+	Value Object
+}
+
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (h *Hash) Type() ObjectType { return HASH_OBJ }
+func (h *Hash) Inspect() string {
+	var out bytes.Buffer
+
+	var pairs []string
+	for _, pari := range h.Pairs {
+		pairs = append(pairs, fmt.Sprintf("%s:%s", pari.Key.Inspect(), pari.Value.Inspect()))
+	}
+	out.WriteString("{")
+	out.WriteString(strings.Join(pairs, ", "))
+	out.WriteString("}")
+	return out.String()
+}
+
+// Hashable 可获得hash值对象接口
+type Hashable interface {
+	HashKey() HashKey
 }
