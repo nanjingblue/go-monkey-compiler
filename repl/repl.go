@@ -3,10 +3,10 @@ package repl
 import (
 	"bufio"
 	"fmt"
-	"github.com/nanjingblue/go-monkey/evaluator"
+	"github.com/nanjingblue/go-monkey/compiler"
 	"github.com/nanjingblue/go-monkey/lexer"
-	"github.com/nanjingblue/go-monkey/object"
 	"github.com/nanjingblue/go-monkey/parser"
+	"github.com/nanjingblue/go-monkey/vm"
 	"io"
 )
 
@@ -20,7 +20,6 @@ const GOMONKET = `
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
 
 	io.WriteString(out, GOMONKET)
 	for {
@@ -33,22 +32,35 @@ func Start(in io.Reader, out io.Writer) {
 		line := scanner.Text()
 		l := lexer.New(line)
 		p := parser.New(l)
+
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
 			printParseErrors(out, p.Errors())
 			continue
 		}
 
-		evaluated := evaluator.Eval(program, env)
-		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
+		comp := compiler.New()
+		err := comp.Compile(program)
+		if err != nil {
+			fmt.Fprintf(out, "Woops! Compilation failed:\n %s\n", err)
+			continue
 		}
+
+		machine := vm.New(comp.Bytecode())
+		err = machine.Run()
+		if err != nil {
+			fmt.Fprintf(out, "Woops! Executing bytecode failed:\n %s\n", err)
+			continue
+		}
+
+		stackTop := machine.StackTop()
+		io.WriteString(out, stackTop.Inspect())
+		io.WriteString(out, "\n")
 	}
 }
 
 func printParseErrors(out io.Writer, errors []string) {
-	io.WriteString(out, "woops! We ran into some monkey business here!\n")
+	io.WriteString(out, "Woops! We ran into some monkey business here!\n")
 	io.WriteString(out, "parser errors:\n")
 	for _, msg := range errors {
 		io.WriteString(out, "\t"+msg+"\n")
