@@ -41,6 +41,15 @@ func (vm *VM) StackTop() object.Object {
 	return vm.stack[vm.sp-1]
 }
 
+/*
+LastPoppedStackElem 获取最后一个弹出栈的元素
+由于只是通过递减 vm.sp 使元素弹栈 因此可以找到之前栈顶元素的地方
+修改虚拟机测试，确保 OpPop 的执行时正确的
+*/
+func (vm *VM) LastPoppedStackElem() object.Object {
+	return vm.stack[vm.sp]
+}
+
 func (vm *VM) Run() error {
 	for ip := 0; ip < len(vm.instructions); ip++ {
 		op := code.Opcode(vm.instructions[ip])
@@ -64,6 +73,8 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpPop:
+			vm.pop()
 		}
 	}
 	return nil
