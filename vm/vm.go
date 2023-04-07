@@ -41,6 +41,23 @@ func (vm *VM) StackTop() object.Object {
 	return vm.stack[vm.sp-1]
 }
 
+func (vm *VM) push(o object.Object) error {
+	if vm.sp >= StackSize {
+		return fmt.Errorf("stack overflow")
+	}
+
+	vm.stack[vm.sp] = o
+	vm.sp++
+
+	return nil
+}
+
+func (vm *VM) pop() object.Object {
+	o := vm.stack[vm.sp-1]
+	vm.sp--
+	return o
+}
+
 /*
 LastPoppedStackElem 获取最后一个弹出栈的元素
 由于只是通过递减 vm.sp 使元素弹栈 因此可以找到之前栈顶元素的地方
@@ -62,14 +79,8 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
-		case code.OpAdd:
-			right := vm.pop()
-			left := vm.pop()
-			leftValue := left.(*object.Integer).Value
-			rightValue := right.(*object.Integer).Value
-
-			result := leftValue + rightValue
-			err := vm.push(&object.Integer{Value: result})
+		case code.OpAdd, code.OpSub, code.OpMul, code.OpDiv:
+			err := vm.executeBinaryOperation(op)
 			if err != nil {
 				return err
 			}
@@ -80,19 +91,36 @@ func (vm *VM) Run() error {
 	return nil
 }
 
-func (vm *VM) push(o object.Object) error {
-	if vm.sp >= StackSize {
-		return fmt.Errorf("stack overflow")
+func (vm *VM) executeBinaryOperation(op code.Opcode) error {
+	right := vm.pop()
+	left := vm.pop()
+
+	leftType := left.Type()
+	rightType := right.Type()
+
+	if leftType == object.INTEGER_OBJ && rightType == object.INTEGER_OBJ {
+		return vm.executeBinaryIntegerOperation(op, left, right)
 	}
-
-	vm.stack[vm.sp] = o
-	vm.sp++
-
-	return nil
+	return fmt.Errorf("unsupported types for binary operation: %s %s", leftType, rightType)
 }
 
-func (vm *VM) pop() object.Object {
-	o := vm.stack[vm.sp-1]
-	vm.sp--
-	return o
+func (vm *VM) executeBinaryIntegerOperation(op code.Opcode, left, right object.Object) error {
+	leftValue := left.(*object.Integer).Value
+	rightValue := right.(*object.Integer).Value
+
+	var result int64
+
+	switch op {
+	case code.OpAdd:
+		result = leftValue + rightValue
+	case code.OpSub:
+		result = leftValue - rightValue
+	case code.OpMul:
+		result = leftValue * rightValue
+	case code.OpDiv:
+		result = leftValue / rightValue
+	default:
+		return fmt.Errorf("unknown integer operation: %d", op)
+	}
+	return vm.push(&object.Integer{Value: result})
 }
